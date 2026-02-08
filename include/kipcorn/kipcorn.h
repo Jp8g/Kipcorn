@@ -3,8 +3,8 @@
 
 #define _GNU_SOURCE 1
 
-#include "../external/xdg-shell.h"
-#include "../external/xdg-decoration-unstable-v1.h"
+#include <xdg-shell.h>
+#include <xdg-decoration-unstable-v1.h>
 #include <xkbcommon/xkbcommon.h>
 #include <wayland-egl.h>
 #include <EGL/egl.h>
@@ -177,6 +177,7 @@ KipcornWindow KipcornCreateWindow(uint32_t width, uint32_t height, const char* t
 void KipcornWindowSetVsync(KipcornWindow window, bool vsync);
 void KipcornMakeEglContextCurrent(EGLContext context);
 void KipcornMakeEglSurfaceCurrent(KipcornWindow window);
+uint8_t* KipcornGetPixels(KipcornWindow window);
 EGLContext KipcornGetEglContext(KipcornWindow window);
 EGLSurface KipcornGetEglSurface(KipcornWindow window);
 uint32_t KipcornGetWindowWidth(KipcornWindow window);

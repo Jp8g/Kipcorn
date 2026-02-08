@@ -1,0 +1,59 @@
+[
+  {
+    "file": "src/kipcorn.c",
+    "arguments": [
+      "gcc",
+      "-std=c99",
+      "-Wall",
+      "-Wextra",
+      "-O3",
+      "-fPIC",
+      "-Iinclude",
+      "-Iexternal",
+      "-c",
+      "src/kipcorn.c",
+      "-o",
+      "build/src/kipcorn.o"
+    ],
+    "directory": "/home/hezzy/Projects/Kipcorn",
+    "output": "build/src/kipcorn.o"
+  },
+  {
+    "file": "external/xdg-shell.c",
+    "arguments": [
+      "gcc",
+      "-std=c99",
+      "-Wall",
+      "-Wextra",
+      "-O3",
+      "-fPIC",
+      "-Iinclude",
+      "-Iexternal",
+      "-c",
+      "external/xdg-shell.c",
+      "-o",
+      "build/external/xdg-shell.o"
+    ],
+    "directory": "/home/hezzy/Projects/Kipcorn",
+    "output": "build/external/xdg-shell.o"
+  },
+  {
+    "file": "external/xdg-decoration-unstable-v1.c",
+    "arguments": [
+      "gcc",
+      "-std=c99",
+      "-Wall",
+      "-Wextra",
+      "-O3",
+      "-fPIC",
+      "-Iinclude",
+      "-Iexternal",
+      "-c",
+      "external/xdg-decoration-unstable-v1.c",
+      "-o",
+      "build/external/xdg-decoration-unstable-v1.o"
+    ],
+    "directory": "/home/hezzy/Projects/Kipcorn",
+    "output": "build/external/xdg-decoration-unstable-v1.o"
+  }
+]

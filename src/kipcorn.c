@@ -1,4 +1,4 @@
-#include "../include/kipcorn.h"
+#include <kipcorn/kipcorn.h>
 #include <EGL/egl.h>
 #include <stdint.h>
 #include <wayland-client-protocol.h>
@@ -224,6 +224,10 @@ void KipcornMakeEglSurfaceCurrent(KipcornWindow window) {
     eglMakeCurrent(eglDisplay, currentEglSurface, currentEglSurface, windowData->eglContext);
 }
 
+uint8_t* KipcornGetPixels(KipcornWindow window) {
+    return window < kipcornWindowCount && kipcornWindows[window].graphicsBackend == KIPCORN_GRAPHICS_BACKEND_SOFTWARE ? kipcornWindows[window].pixels : NULL;
+}
+
 EGLContext KipcornGetEglContext(KipcornWindow window) {
     return window < kipcornWindowCount ? kipcornWindows[window].eglContext : NULL;
 }
@@ -283,7 +287,7 @@ void KipcornPollEvents(bool blocking) {
 }
 
 bool KipcornIsKeyDown(KipcornWindow window, KipcornKey key) {
-    return key < 139 ? kipcornWindows[window].keyStates[key] : false;
+    return key < 139 && window < kipcornWindowCount ? kipcornWindows[window].keyStates[key] : false;
 }
 
 bool KipcornIsWindowOpen(KipcornWindow window) {
@@ -531,9 +535,11 @@ void KeyboardLeave(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial,
 }
 
 void KeyboardKey(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state) {
+    if (!kipcornWindows) return;
+
     xkb_state_update_key(xkbState, key + 8, state ? XKB_KEY_DOWN : XKB_KEY_UP);
 
-    if (keyboardFocusedKipcornWindow != KIPCORN_WINDOW_INVALID && key < 139) {
+    if (keyboardFocusedKipcornWindow < kipcornWindowCount && key < 139) {
         kipcornWindows[keyboardFocusedKipcornWindow].keyStates[key] = state;
     }
 }
@@ -563,6 +569,9 @@ void PointerLeave(void *data, struct wl_pointer* wl_pointer, uint32_t serial, st
 }
 
 void PointerMotion(void *data, struct wl_pointer* wl_pointer, uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y) {
+    if (pointerFocusedKipcornWindow >= kipcornWindowCount) return;
+    if (!kipcornWindows) return;
+
     kipcornWindows[pointerFocusedKipcornWindow].pointerX = surface_x;
     kipcornWindows[pointerFocusedKipcornWindow].pointerY = surface_y;
 }
