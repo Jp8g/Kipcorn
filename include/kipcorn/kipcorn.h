@@ -175,6 +175,7 @@ extern "C" {
 
 kip_window kip_create_window(uint32_t width, uint32_t height, const char* title, kip_graphics_backend graphicsBackend, bool vsync, bool windowDecorations, bool inputPassthrough, EGLContext shareContext);
 void kip_set_vsync(kip_window window, bool vsync);
+bool kip_get_vsync(kip_window window);
 void kip_make_egl_context_current(EGLContext context);
 void kip_make_egl_surface_current(kip_window window);
 uint8_t* kip_get_pixels(kip_window window);

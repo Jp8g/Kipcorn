@@ -1,6 +1,7 @@
 #include <kipcorn/kipcorn.h>
 #include <EGL/egl.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <wayland-client-protocol.h>
 #include <wayland-util.h>
 #include <xkbcommon/xkbcommon.h>
@@ -209,6 +210,10 @@ void kip_set_vsync(kip_window window, bool vsync) {
     }
 }
 
+bool kip_get_vsync(kip_window window) {
+    return kipcornWindows[window].vsync;
+}
+
 void kip_make_egl_context_current(EGLContext context) {
     if (currentEglContext == context) return;
     currentEglContext = context;
@@ -217,6 +222,7 @@ void kip_make_egl_context_current(EGLContext context) {
 
 void kip_make_egl_surface_current(kip_window window) {
     kip_window_data* windowData = &kipcornWindows[window];
+    if (!windowData) return;
 
     if (currentEglSurface == windowData->eglSurface) return;
 
@@ -225,31 +231,31 @@ void kip_make_egl_surface_current(kip_window window) {
 }
 
 uint8_t* kip_get_pixels(kip_window window) {
-    return window < kipcornWindowCount && kipcornWindows[window].graphicsBackend == KIPCORN_GRAPHICS_BACKEND_SOFTWARE ? kipcornWindows[window].pixels : NULL;
+    return kipcornWindows[window].pixels;
 }
 
 EGLContext kip_get_egl_context(kip_window window) {
-    return window < kipcornWindowCount ? kipcornWindows[window].eglContext : NULL;
+    return kipcornWindows[window].eglContext;
 }
 
 EGLSurface kip_get_egl_surface(kip_window window) {
-    return window < kipcornWindowCount ? kipcornWindows[window].eglSurface : NULL;
+    return kipcornWindows[window].eglSurface;
 }
 
 uint32_t kip_get_width(kip_window window) {
-    return window < kipcornWindowCount ? kipcornWindows[window].width : 0;
+    return kipcornWindows[window].width;
 }
 
 uint32_t kip_get_height(kip_window window) {
-    return window < kipcornWindowCount ? kipcornWindows[window].height : 0;
+    return kipcornWindows[window].height;
 }
 
 kip_fixed_point kip_pointer_get_x(kip_window window) {
-    return window < kipcornWindowCount ? kipcornWindows[window].pointerX : 0;
+    return kipcornWindows[window].pointerX;
 }
 
 kip_fixed_point kip_pointer_get_y(kip_window window) {
-    return window < kipcornWindowCount ? kipcornWindows[window].pointerY : 0;
+    return kipcornWindows[window].pointerY;
 }
 
 int32_t kip_fixed_point_to_int(kip_fixed_point fixedPoint) {
@@ -287,11 +293,11 @@ void kip_poll_events(bool blocking) {
 }
 
 bool kip_is_key_down(kip_window window, kip_key key) {
-    return key < 139 && window < kipcornWindowCount ? kipcornWindows[window].keyStates[key] : false;
+    return key < 139 && kipcornWindows[window].keyStates[key];
 }
 
 bool kip_window_is_open(kip_window window) {
-    return window < kipcornWindowCount ? kipcornWindows[window].open : false;
+    return kipcornWindows[window].open;
 }
 
 void kip_display_frame(kip_window_data* windowData) {
@@ -325,11 +331,12 @@ void kip_display_frame(kip_window_data* windowData) {
 }
 
 bool kip_frame_can_render(kip_window window) {
-    return window < kipcornWindowCount ? kipcornWindows[window].frameCanRender : false;
+    return kipcornWindows[window].frameCanRender;
 }
 
 void kip_submit_frame(kip_window window) {
     kip_window_data* windowData = &kipcornWindows[window];
+    if (!windowData) return;
 
     if (windowData->vsync) {
         if (!windowData->frameCanRender) return;
@@ -342,6 +349,7 @@ void kip_submit_frame(kip_window window) {
 
 void kip_frame_callback(void* data, struct wl_callback* callback, uint32_t callbackData) {
     kip_window_data* windowData = &kipcornWindows[(kip_window)(uintptr_t)data];
+    if (!windowData) return;
 
     windowData->frameCallbackPending = false;
     windowData->frameCanRender = true;
@@ -352,6 +360,7 @@ void kip_frame_callback(void* data, struct wl_callback* callback, uint32_t callb
 
 void kip_close_window(kip_window window) {
     kip_window_data* windowData = &kipcornWindows[window];
+    if (!windowData) return;
 
     switch (windowData->graphicsBackend) {
         case KIPCORN_GRAPHICS_BACKEND_NONE: {
@@ -389,7 +398,7 @@ void kip_close_window(kip_window window) {
     if (windowData->frameCallbackPending) wl_callback_destroy(windowData->callback);
     wl_surface_destroy(windowData->waylandSurface);
 
-    memset(&kipcornWindows[window], 0, sizeof(kip_window_data));
+    memset(windowData, 0, sizeof(kip_window_data));
 }
 
 void kip_shutdown(void) {
@@ -460,6 +469,7 @@ void kip_resize(kip_window_data* windowData, uint32_t width, uint32_t height) {
 
 void kip_configure_xdg_surface(void* data, struct xdg_surface* surface, uint32_t serial) {
     kip_window_data* windowData = &kipcornWindows[(kip_window)(uintptr_t)data];
+    if (!windowData) return;
 
     xdg_surface_ack_configure(surface, serial);
 
@@ -475,6 +485,7 @@ void kip_toplevel_configuration(void* data, struct xdg_toplevel* toplevel, int32
     }
 
     kip_window_data* windowData = &kipcornWindows[(kip_window)(uintptr_t)data];
+    if (!windowData) return;
 
     if (windowData->width != width || windowData->height != height) {
         kip_resize(windowData, width, height);
