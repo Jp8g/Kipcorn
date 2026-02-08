@@ -18,7 +18,7 @@
 #define KIPCORN_WINDOW_INVALID UINT32_MAX
 #define KIPCORN_WL_VERSION 4
 
-typedef enum KipcornKey {
+typedef enum kip_key {
     KIPCORN_KEY_RESERVED = 0,
     KIPCORN_KEY_ESC = 1,
     KIPCORN_KEY_1 = 2,
@@ -126,19 +126,19 @@ typedef enum KipcornKey {
 
     KIPCORN_KEY_LEFTMETA = 125,
     KIPCORN_KEY_RIGHTMETA = 126,
-} KipcornKey;
+} kip_key;
 
-typedef enum KipcornGraphicsBackend {
+typedef enum kip_graphics_backend {
     KIPCORN_GRAPHICS_BACKEND_NONE,
     KIPCORN_GRAPHICS_BACKEND_SOFTWARE,
     KIPCORN_GRAPHICS_BACKEND_OPENGL,
     KIPCORN_GRAPHICS_BACKEND_VULKAN,
-} KipcornGraphicsBackend;
+} kip_graphics_backend;
 
-typedef uint32_t KipcornWindow;
-typedef wl_fixed_t KipcornFixedPoint;
+typedef uint32_t kip_window;
+typedef wl_fixed_t kip_fixed_point;
 
-typedef struct KipcornWindowData {
+typedef struct kip_window_data {
     struct wl_surface* waylandSurface;
     struct xdg_surface* xdgSurface;
     struct wl_callback* callback;
@@ -152,14 +152,14 @@ typedef struct KipcornWindowData {
     EGLSurface eglSurface;
     EGLContext eglContext;
 
-    KipcornGraphicsBackend graphicsBackend;
+    kip_graphics_backend graphicsBackend;
     uint16_t width;
     uint16_t height;
 
     bool keyStates[139];
 
-    KipcornFixedPoint pointerX;
-    KipcornFixedPoint pointerY;
+    kip_fixed_point pointerX;
+    kip_fixed_point pointerY;
 
     bool decorationsEnabled;
     bool frameCallbackPending;
@@ -167,32 +167,32 @@ typedef struct KipcornWindowData {
     bool open;
     bool vsync;
     bool focused;
-} KipcornWindowData;
+} kip_window_data;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-KipcornWindow KipcornCreateWindow(uint32_t width, uint32_t height, const char* title, KipcornGraphicsBackend graphicsBackend, bool vsync, bool windowDecorations, bool inputPassthrough, EGLContext shareContext);
-void KipcornWindowSetVsync(KipcornWindow window, bool vsync);
-void KipcornMakeEglContextCurrent(EGLContext context);
-void KipcornMakeEglSurfaceCurrent(KipcornWindow window);
-uint8_t* KipcornGetPixels(KipcornWindow window);
-EGLContext KipcornGetEglContext(KipcornWindow window);
-EGLSurface KipcornGetEglSurface(KipcornWindow window);
-uint32_t KipcornGetWindowWidth(KipcornWindow window);
-uint32_t KipcornGetWindowHeight(KipcornWindow window);
-KipcornFixedPoint KipcornGetPointerX(KipcornWindow window);
-KipcornFixedPoint KipcornGetPointerY(KipcornWindow window);
-int32_t KipcornFixedPointToInt(KipcornFixedPoint fixedPoint);
-double KipcornFixedPointToDouble(KipcornFixedPoint fixedPoint);
-bool KipcornFrameCanRender(KipcornWindow window);
-void KipcornSubmitFrame(KipcornWindow window);
-void KipcornPollEvents(bool blocking);
-bool KipcornIsKeyDown(KipcornWindow window, KipcornKey key);
-bool KipcornIsWindowOpen(KipcornWindow window);
-void KipcornCloseWindow(KipcornWindow window);
-void KipcornShutdown(void);
+kip_window kip_create_window(uint32_t width, uint32_t height, const char* title, kip_graphics_backend graphicsBackend, bool vsync, bool windowDecorations, bool inputPassthrough, EGLContext shareContext);
+void kip_set_vsync(kip_window window, bool vsync);
+void kip_make_egl_context_current(EGLContext context);
+void kip_make_egl_surface_current(kip_window window);
+uint8_t* kip_get_pixels(kip_window window);
+EGLContext kip_get_egl_context(kip_window window);
+EGLSurface kip_get_egl_surface(kip_window window);
+uint32_t kip_get_width(kip_window window);
+uint32_t kip_get_height(kip_window window);
+kip_fixed_point kip_pointer_get_x(kip_window window);
+kip_fixed_point kip_pointer_get_y(kip_window window);
+int32_t kip_fixed_point_to_int(kip_fixed_point fixedPoint);
+double kip_fixed_point_to_double(kip_fixed_point fixedPoint);
+void kip_poll_events(bool blocking);
+bool kip_is_key_down(kip_window window, kip_key key);
+bool kip_window_is_open(kip_window window);
+bool kip_frame_can_render(kip_window window);
+void kip_submit_frame(kip_window window);
+void kip_close_window(kip_window window);
+void kip_shutdown(void);
 
 #ifdef __cplusplus
 }
