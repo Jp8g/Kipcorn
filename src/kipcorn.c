@@ -113,7 +113,9 @@ void kip_egl_init() {
 }
 
 kip_window kip_create_window(uint32_t width, uint32_t height, const char* title, kip_graphics_backend graphicsBackend, bool vsync, bool windowDecorations, bool inputPassthrough, EGLContext shareContext) {
-    if (!kipcornInit) kip_init();
+    if (!kipcornInit) {
+        return UINT32_MAX;
+    }
 
     kipcornWindowCount++;
 
@@ -402,6 +404,8 @@ void kip_close_window(kip_window window) {
 }
 
 void kip_shutdown(void) {
+    kipcornInit = false;
+
     eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
     for (uint32_t i = 0; i < kipcornWindowCount; i++) {
@@ -426,6 +430,7 @@ void kip_shutdown(void) {
     xkb_context_unref(context);
 
     wl_display_disconnect(display);
+    wl_registry_destroy(registry);
     free(kipcornWindows);
 }
 

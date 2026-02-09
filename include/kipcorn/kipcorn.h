@@ -173,6 +173,7 @@ typedef struct kip_window_data {
 extern "C" {
 #endif
 
+void kip_init();
 kip_window kip_create_window(uint32_t width, uint32_t height, const char* title, kip_graphics_backend graphicsBackend, bool vsync, bool windowDecorations, bool inputPassthrough, EGLContext shareContext);
 void kip_set_vsync(kip_window window, bool vsync);
 bool kip_get_vsync(kip_window window);
