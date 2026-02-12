@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -Wall -Wextra -O3 -fPIC
+CFLAGS = -std=c99 -Wall -O3 -fPIC
 LIB_NAME = libkipcorn.a
 
 INC_DIRS = include external
