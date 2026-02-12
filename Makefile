@@ -2,17 +2,15 @@ CC = gcc
 CFLAGS = -std=c99 -Wall -Wextra -O3 -fPIC
 LIB_NAME = libkipcorn.a
 
-INC = -Iinclude -Iexternal
+INC_FLAGS = -Iinclude -Iexternal
 
 PKGS = wayland-client egl wayland-egl xkbcommon
 PKG_CFLAGS = $(shell pkg-config --cflags $(PKGS))
 PKG_LIBS   = $(shell pkg-config --libs $(PKGS))
 
-ALL_CFLAGS = $(CFLAGS) $(INC) $(PKG_CFLAGS)
+ALL_CFLAGS = $(CFLAGS) $(INC_FLAGS) $(PKG_CFLAGS)
 
-SRCS = src/kipcorn.c \
-       external/xdg-shell.c \
-       external/xdg-decoration-unstable-v1.c
+SRCS = $(shell find src external -name "*.c")
 
 OBJS = $(SRCS:%.c=build/%.o)
 
@@ -30,4 +28,7 @@ build/%.o: %.c
 clean:
 	rm -rf build $(LIB_NAME)
 
-.PHONY: all clean
+print-pkgs:
+	@echo $(PKGS)
+
+.PHONY: all clean print-pkgs
