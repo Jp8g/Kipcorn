@@ -2,6 +2,7 @@
 #include <EGL/egl.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
 #include <wayland-util.h>
 #include <xkbcommon/xkbcommon.h>
@@ -234,6 +235,14 @@ void kip_make_egl_surface_current(kip_window window) {
 
 uint8_t* kip_get_pixels(kip_window window) {
     return kipcornWindows[window].pixels;
+}
+
+struct wl_display* kip_get_wayland_display() {
+    return display;
+}
+
+struct wl_surface* kip_get_wayland_surface(kip_window window) {
+    return kipcornWindows[window].waylandSurface;
 }
 
 EGLContext kip_get_egl_context(kip_window window) {

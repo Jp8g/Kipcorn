@@ -180,6 +180,8 @@ bool kip_get_vsync(kip_window window);
 void kip_make_egl_context_current(EGLContext context);
 void kip_make_egl_surface_current(kip_window window);
 uint8_t* kip_get_pixels(kip_window window);
+struct wl_display* kip_get_wayland_display();
+struct wl_surface* kip_get_wayland_surface(kip_window window);
 EGLContext kip_get_egl_context(kip_window window);
 EGLSurface kip_get_egl_surface(kip_window window);
 uint32_t kip_get_width(kip_window window);
