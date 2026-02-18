@@ -5,18 +5,39 @@
       "gcc",
       "-std=c99",
       "-Wall",
-      "-Wextra",
       "-O3",
       "-fPIC",
       "-Iinclude",
       "-Iexternal",
+      "-MMD",
+      "-MP",
       "-c",
       "src/kipcorn.c",
       "-o",
       "build/src/kipcorn.o"
     ],
-    "directory": "/home/hezzy/Projects/Kipcorn",
+    "directory": "/home/jpeg/Projects/Kipcorn",
     "output": "build/src/kipcorn.o"
+  },
+  {
+    "file": "external/wlr-layer-shell-unstable-v1.c",
+    "arguments": [
+      "gcc",
+      "-std=c99",
+      "-Wall",
+      "-O3",
+      "-fPIC",
+      "-Iinclude",
+      "-Iexternal",
+      "-MMD",
+      "-MP",
+      "-c",
+      "external/wlr-layer-shell-unstable-v1.c",
+      "-o",
+      "build/external/wlr-layer-shell-unstable-v1.o"
+    ],
+    "directory": "/home/jpeg/Projects/Kipcorn",
+    "output": "build/external/wlr-layer-shell-unstable-v1.o"
   },
   {
     "file": "external/xdg-shell.c",
@@ -24,17 +45,18 @@
       "gcc",
       "-std=c99",
       "-Wall",
-      "-Wextra",
       "-O3",
       "-fPIC",
       "-Iinclude",
       "-Iexternal",
+      "-MMD",
+      "-MP",
       "-c",
       "external/xdg-shell.c",
       "-o",
       "build/external/xdg-shell.o"
     ],
-    "directory": "/home/hezzy/Projects/Kipcorn",
+    "directory": "/home/jpeg/Projects/Kipcorn",
     "output": "build/external/xdg-shell.o"
   },
   {
@@ -43,17 +65,18 @@
       "gcc",
       "-std=c99",
       "-Wall",
-      "-Wextra",
       "-O3",
       "-fPIC",
       "-Iinclude",
       "-Iexternal",
+      "-MMD",
+      "-MP",
       "-c",
       "external/xdg-decoration-unstable-v1.c",
       "-o",
       "build/external/xdg-decoration-unstable-v1.o"
     ],
-    "directory": "/home/hezzy/Projects/Kipcorn",
+    "directory": "/home/jpeg/Projects/Kipcorn",
     "output": "build/external/xdg-decoration-unstable-v1.o"
   }
 ]

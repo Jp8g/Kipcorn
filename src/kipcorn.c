@@ -438,8 +438,8 @@ void kip_shutdown(void) {
     xkb_keymap_unref(keymap);
     xkb_context_unref(context);
 
-    wl_display_disconnect(display);
     wl_registry_destroy(registry);
+    wl_display_disconnect(display);
     free(kipcornWindows);
 }
 
