@@ -6,6 +6,6 @@ Whoops, wrong documentation.
 
 Kipcorn is a low level window and input library written in C, with minimal dependencies.
 
-Currently, Kipcorn only supports Linux with Wayland, and has a limited featureset.
+Currently, Kipcorn only supports Linux with Wayland, Xcb, and Xlib. It does not have a broad featureset, but it supports simple usages (like creating and destroying platform specific windows, and supporting software rendering). It does not (as of yet, and intentionally) have a cross-api interface for managing windows, right now it only exposes helpers for managing platform-dependent windows.
 
-At Kipcorn v1.0, it is planned to support all major desktop platforms (Linux, Windows, MacOS) with a wide range of toggleable features for maximum modularity.
+At Kipcorn v1.0, it is planned to support all major desktop platforms (Linux, Windows, MacOS) with extensive modular features and a cross-api interface (optional, not required).
