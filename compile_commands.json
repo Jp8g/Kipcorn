@@ -1,21 +1,22 @@
 [
   {
-    "file": "src/kipcorn.c",
+    "file": "src/lmfw.c",
     "arguments": [
-      "gcc",
+      "/usr/bin/gcc",
       "-std=c99",
       "-Wall",
       "-O3",
+      "-fvisibility=hidden",
       "-Iinclude",
       "-Iexternal",
       "-MMD",
       "-MP",
       "-c",
-      "src/kipcorn.c",
+      "src/lmfw.c",
       "-o",
-      "build/src/kipcorn.o"
+      "build/src/lmfw.o"
     ],
-    "directory": "/home/jpeg/Projects/kipcorn",
-    "output": "build/src/kipcorn.o"
+    "directory": "/home/jpeg/Projects/lmfw",
+    "output": "build/src/lmfw.o"
   }
 ]

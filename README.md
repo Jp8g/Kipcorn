@@ -1,11 +1,9 @@
-# Kipcorn v0.1.0
+# LMFW v0.1.1
 
-To fry a kipcorn, deep-fry it in hot oil at 160-175°C for about 5–7 minutes, or until it is golden brown and cooked through. Place the kipcorn in the hot oil and fry in batches without crowding the pan. Once cooked, remove the kipcorn and drain it on a wire rack to maintain crispiness, then serve it hot with a sauce of your choice.
+(**L**ow-level **M**inimal **F**ramework for **W**indowing)
 
-Whoops, wrong documentation.
+LMFW is a low level, and cross-platform windowing library written in C, with minimal dependencies.
 
-Kipcorn is a low level window and input library written in C, with minimal dependencies.
+Currently, LMFW only supports Linux with Wayland, Xcb, and Xlib. It does not have a broad featureset, but it supports simple usages (like creating and destroying platform specific windows, and supporting software rendering). It does not (as of yet, and intentionally) have a cross-platform interface for managing windows, right now it only exposes helpers for managing platform-dependent windows.
 
-Currently, Kipcorn only supports Linux with Wayland, Xcb, and Xlib. It does not have a broad featureset, but it supports simple usages (like creating and destroying platform specific windows, and supporting software rendering). It does not (as of yet, and intentionally) have a cross-api interface for managing windows, right now it only exposes helpers for managing platform-dependent windows.
-
-At Kipcorn v1.0, it is planned to support all major desktop platforms (Linux, Windows, MacOS) with extensive modular features and a cross-api interface (optional, not required).
+At LMFW v1.0, it is planned to support all major desktop platforms (Linux, Windows, MacOS) with extensive modular features and a cross-platform interface (optional, not required).

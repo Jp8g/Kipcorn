@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -std=c99 -Wall -O3 -fvisibility=hidden
-NAME = libkipcorn.a
+NAME = liblmfw.a
 
 KIPCORN_WL ?= 0
 KIPCORN_XCB ?= 0
@@ -52,7 +52,7 @@ clean:
 	rm -rf build $(NAME)
 
 print-libs:
-	@echo $(abspath libkipcorn.a)
+	@echo $(abspath $(NAME))
 	@pkg-config --libs $(PKGS)
 
 print-incs:

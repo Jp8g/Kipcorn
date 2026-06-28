@@ -1,14 +1,13 @@
-#define KIPCORN_WL
-#include <kipcorn/kipcorn.h>
+#include <lmfw/lmfw.h>
 
-kip_window_data* kipcornWindows;
-uint32_t kipcornWindowCount = 0;
-uint32_t kipcornWindowCapacity = 0;
+lmfw_window_data* lmfwWindows;
+uint32_t lmfwWindowCount = 0;
+uint32_t lmfwWindowCapacity = 0;
 
-kip_window keyboardFocusedKipcornWindow = KIP_WINDOW_INVALID;
-kip_window pointerFocusedKipcornWindow = KIP_WINDOW_INVALID;
+lmfw_window keyboardFocusedLmfwWindow = LMFW_WINDOW_INVALID;
+lmfw_window pointerFocusedLmfwWindow = LMFW_WINDOW_INVALID;
 
-#ifdef KIPCORN_WL
+#ifdef LMFW_WL
 #include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
 #include <wayland-util.h>
@@ -21,13 +20,13 @@ kip_window pointerFocusedKipcornWindow = KIP_WINDOW_INVALID;
 #include <string.h>
 #endif
 
-#ifdef KIPCORN_XCB
+#ifdef LMFW_XCB
 #include <xcb/xcb.h>
 #include <stdlib.h>
 #include <string.h>
 #endif
 
-#ifdef KIPCORN_XLIB
+#ifdef LMFW_XLIB
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xresource.h>
@@ -38,84 +37,92 @@ kip_window pointerFocusedKipcornWindow = KIP_WINDOW_INVALID;
 #include <stdint.h>
 #include <unistd.h>
 
-kip_window_type kip_get_window_type(kip_window window) {
-    return kipcornWindows[window].windowType;
+inline lmfw_window_type lmfw_get_window_type(lmfw_window window) {
+    return lmfwWindows[window].windowType;
 }
 
-kip_window_type kip_get_graphics_backend(kip_window window) {
-    return kipcornWindows[window].windowType & 0b00000001;
+inline lmfw_window_type lmfw_get_graphics_backend(lmfw_window window) {
+    return lmfwWindows[window].windowType & 0b00000001;
 }
 
-kip_window_type kip_get_window_backend(kip_window window) {
-    return kipcornWindows[window].windowType & 0b00001110;
+inline lmfw_window_type lmfw_get_window_backend(lmfw_window window) {
+    return lmfwWindows[window].windowType & 0b00001110;
 }
 
-uint32_t kip_get_width(kip_window window) {
-    return kipcornWindows[window].width;
+inline uint32_t lmfw_get_width(lmfw_window window) {
+    return lmfwWindows[window].width;
 }
 
-uint32_t kip_get_height(kip_window window) {
-    return kipcornWindows[window].height;
+inline uint32_t lmfw_get_height(lmfw_window window) {
+    return lmfwWindows[window].height;
 }
 
-kip_fixed_point kip_pointer_get_x(kip_window window) {
-    return kipcornWindows[window].pointerX;
+inline lmfw_fixed_point lmfw_pointer_get_x(lmfw_window window) {
+    return lmfwWindows[window].pointerX;
 }
 
-kip_fixed_point kip_pointer_get_y(kip_window window) {
-    return kipcornWindows[window].pointerY;
+inline lmfw_fixed_point lmfw_pointer_get_y(lmfw_window window) {
+    return lmfwWindows[window].pointerY;
 }
 
-uint8_t* kip_get_pixels(kip_window window) {
-    return kipcornWindows[window].pixels;
+inline void lmfw_pointer_set_x(lmfw_window window, lmfw_fixed_point pointerX) {
+    lmfwWindows[window].pointerX = pointerX;
 }
 
-int32_t kip_fixed_point_to_int(kip_fixed_point fixedPoint) {
+inline void lmfw_pointer_set_y(lmfw_window window, lmfw_fixed_point pointerY) {
+    lmfwWindows[window].pointerY = pointerY;
+}
+
+inline uint8_t* lmfw_get_pixels(lmfw_window window) {
+    return lmfwWindows[window].pixels;
+}
+
+inline int32_t lmfw_fixed_point_to_int(lmfw_fixed_point fixedPoint) {
     return fixedPoint >> 8;
 }
 
-int32_t kip_fixed_point_to_int_round(kip_fixed_point fixedPoint) {
+inline int32_t lmfw_fixed_point_to_int_round(lmfw_fixed_point fixedPoint) {
     return (fixedPoint + 0b10000000) >> 8;
 }
 
-double kip_fixed_point_to_double(kip_fixed_point fixedPoint) {
+inline double lmfw_fixed_point_to_double(lmfw_fixed_point fixedPoint) {
     return (double)fixedPoint / 256.0;
 }
 
-bool kip_is_key_down(kip_window window, kip_key key) {
-    return key < 139 && kipcornWindows[window].keyStates[key];
+inline bool lmfw_is_key_down(lmfw_window window, lmfw_key key) {
+    return key < 139 && lmfwWindows[window].keyStates[key];
 }
 
-bool kip_window_is_open(kip_window window) {
-    return kipcornWindows[window].open;
+inline bool lmfw_window_is_open(lmfw_window window) {
+    return lmfwWindows[window].open;
 }
 
-#ifdef KIPCORN_WL
-void kip_wl_configure_xdg_surface(void* data, struct xdg_surface* surface, uint32_t serial);
-void kip_wl_toplevel_configuration(void* data, struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states);
-void kip_wl_toplevel_close(void* data, struct xdg_toplevel* toplevel);
-void kip_wl_toplevel_configure_bounds(void* data, struct xdg_toplevel* toplevel, int32_t width, int32_t height);
-void kip_wl_toplevel_wm_capabilities(void* data, struct xdg_toplevel* toplevel, struct wl_array* states);
-void kip_wl_seat_capabilities(void* data, struct wl_seat* seat, uint32_t capabilities);
-void kip_wl_seat_name(void* data, struct wl_seat* seat, const char* name);
-void kip_wl_keyboard_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t format, int32_t fd, uint32_t size);
-void kip_wl_keyboard_enter(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface, struct wl_array* keys);
-void kip_wl_keyboard_leave(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface);
-void kip_wl_keyboard_key(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state);
-void kip_wl_keyboard_modifiers(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group);
-void kip_wl_keyboard_repeat_info(void* data, struct wl_keyboard* wl_keyboard, int32_t rate, int32_t delay);
-void kip_wl_pointer_enter(void *data, struct wl_pointer* wl_pointer, uint32_t serial, struct wl_surface* surface, wl_fixed_t surface_x, wl_fixed_t surface_y);
-void kip_wl_pointer_leave(void *data, struct wl_pointer* wl_pointer, uint32_t serial, struct wl_surface* surface);
-void kip_wl_pointer_motion(void *data, struct wl_pointer* wl_pointer, uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y);
-void kip_wl_pointer_button(void *data, struct wl_pointer* wl_pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state);
-void kip_wl_xdg_ping(void* data, struct xdg_wm_base* shell, uint32_t serial);
-void kip_wl_registry_global(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version);
-void kip_wl_registry_global_remove(void* data, struct wl_registry* registry, uint32_t name);
+#ifdef LMFW_WL
+void lmfw_wl_configure_xdg_surface(void* data, struct xdg_surface* surface, uint32_t serial);
+void lmfw_wl_toplevel_configuration(void* data, struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states);
+void lmfw_wl_toplevel_close(void* data, struct xdg_toplevel* toplevel);
+void lmfw_wl_toplevel_configure_bounds(void* data, struct xdg_toplevel* toplevel, int32_t width, int32_t height);
+void lmfw_wl_toplevel_wm_capabilities(void* data, struct xdg_toplevel* toplevel, struct wl_array* states);
+void lmfw_wl_seat_capabilities(void* data, struct wl_seat* seat, uint32_t capabilities);
+void lmfw_wl_seat_name(void* data, struct wl_seat* seat, const char* name);
+void lmfw_wl_keyboard_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t format, int32_t fd, uint32_t size);
+void lmfw_wl_keyboard_enter(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface, struct wl_array* keys);
+void lmfw_wl_keyboard_leave(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface);
+void lmfw_wl_keyboard_key(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state);
+void lmfw_wl_keyboard_modifiers(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group);
+void lmfw_wl_keyboard_repeat_info(void* data, struct wl_keyboard* wl_keyboard, int32_t rate, int32_t delay);
+void lmfw_wl_pointer_enter(void *data, struct wl_pointer* wl_pointer, uint32_t serial, struct wl_surface* surface, wl_fixed_t surface_x, wl_fixed_t surface_y);
+void lmfw_wl_pointer_leave(void *data, struct wl_pointer* wl_pointer, uint32_t serial, struct wl_surface* surface);
+void lmfw_wl_pointer_motion(void *data, struct wl_pointer* wl_pointer, uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y);
+void lmfw_wl_pointer_button(void *data, struct wl_pointer* wl_pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state);
+void lmfw_wl_xdg_ping(void* data, struct xdg_wm_base* shell, uint32_t serial);
+void lmfw_wl_registry_global(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version);
+void lmfw_wl_registry_global_remove(void* data, struct wl_registry* registry, uint32_t name);
 
-struct xdg_surface_listener xdgSurfaceListener = {kip_wl_configure_xdg_surface};
-struct xdg_toplevel_listener xdgToplevelListener = {kip_wl_toplevel_configuration, kip_wl_toplevel_close, kip_wl_toplevel_configure_bounds, kip_wl_toplevel_wm_capabilities};
-struct xdg_wm_base_listener shListener = {kip_wl_xdg_ping};
-struct wl_registry_listener registryListener = {kip_wl_registry_global, kip_wl_registry_global_remove};
+struct xdg_surface_listener xdgSurfaceListener = {lmfw_wl_configure_xdg_surface};
+struct xdg_toplevel_listener xdgToplevelListener = {lmfw_wl_toplevel_configuration, lmfw_wl_toplevel_close, lmfw_wl_toplevel_configure_bounds, lmfw_wl_toplevel_wm_capabilities};
+struct xdg_wm_base_listener shListener = {lmfw_wl_xdg_ping};
+struct wl_registry_listener registryListener = {lmfw_wl_registry_global, lmfw_wl_registry_global_remove};
 
 struct wl_compositor* wlCompositor;
 struct wl_display* wlDisplay;
@@ -125,11 +132,11 @@ struct zxdg_decoration_manager_v1* xdgDecorationManager;
 
 struct wl_shm* wlSharedMemory;
 
-struct wl_seat_listener wlSeatListener = {kip_wl_seat_capabilities, kip_wl_seat_name};
+struct wl_seat_listener wlSeatListener = {lmfw_wl_seat_capabilities, lmfw_wl_seat_name};
 
-struct wl_keyboard_listener wlKeyboardListener = {kip_wl_keyboard_keymap, kip_wl_keyboard_enter, kip_wl_keyboard_leave, kip_wl_keyboard_key, kip_wl_keyboard_modifiers, kip_wl_keyboard_repeat_info};
+struct wl_keyboard_listener wlKeyboardListener = {lmfw_wl_keyboard_keymap, lmfw_wl_keyboard_enter, lmfw_wl_keyboard_leave, lmfw_wl_keyboard_key, lmfw_wl_keyboard_modifiers, lmfw_wl_keyboard_repeat_info};
 
-struct wl_pointer_listener wlPointerListener = {kip_wl_pointer_enter, kip_wl_pointer_leave, kip_wl_pointer_motion, kip_wl_pointer_button};
+struct wl_pointer_listener wlPointerListener = {lmfw_wl_pointer_enter, lmfw_wl_pointer_leave, lmfw_wl_pointer_motion, lmfw_wl_pointer_button};
 
 struct xkb_context* xkbContext;
 struct wl_seat* wlSeat;
@@ -142,7 +149,7 @@ struct wl_pointer* wlPointer;
 
 bool wlInit = false;
 
-void kip_wl_init() {
+void lmfw_wl_init() {
     wlInit = true;
     wlDisplay = wl_display_connect(NULL);
     wlRegistry = wl_display_get_registry(wlDisplay);
@@ -150,28 +157,28 @@ void kip_wl_init() {
     wl_display_roundtrip(wlDisplay);
 }
 
-kip_window kip_wl_create_window(uint32_t width, uint32_t height, const char* title, kip_window_type windowType, bool windowDecorations, bool inputPassthrough) {
+lmfw_window lmfw_wl_create_window(uint32_t width, uint32_t height, const char* title, lmfw_window_type windowType, bool windowDecorations, bool inputPassthrough) {
     if (!wlInit) {
-        return KIP_WINDOW_INVALID;
+        return LMFW_WINDOW_INVALID;
     }
 
-    kipcornWindowCount++;
+    lmfwWindowCount++;
 
-    uint32_t oldKipcornWindowCapacity = kipcornWindowCapacity;
-    if (kipcornWindowCount >= kipcornWindowCapacity) {
-        kipcornWindowCapacity = kipcornWindowCapacity ? kipcornWindowCapacity * 2 : 1;
-        kipcornWindows = realloc(kipcornWindows, kipcornWindowCapacity * sizeof(kip_window_data));
+    uint32_t oldLmfwWindowCapacity = lmfwWindowCapacity;
+    if (lmfwWindowCount >= lmfwWindowCapacity) {
+        lmfwWindowCapacity = lmfwWindowCapacity ? lmfwWindowCapacity * 2 : 1;
+        lmfwWindows = realloc(lmfwWindows, lmfwWindowCapacity * sizeof(lmfw_window_data));
 
-        memset(&kipcornWindows[oldKipcornWindowCapacity], 0, (kipcornWindowCapacity - oldKipcornWindowCapacity) * sizeof(kip_window_data));
+        memset(&lmfwWindows[oldLmfwWindowCapacity], 0, (lmfwWindowCapacity - oldLmfwWindowCapacity) * sizeof(lmfw_window_data));
     }
 
-    kip_window window = kipcornWindowCount - 1;
-    kip_window_data* windowData = &kipcornWindows[window];
+    lmfw_window window = lmfwWindowCount - 1;
+    lmfw_window_data* windowData = &lmfwWindows[window];
 
     windowData->width = width;
     windowData->height = height;
-    windowData->windowType = (windowType & 0b00000001) | KIP_WINDOW_TYPE_WINDOW_BACKEND_WL;
-    windowData->platformWindowData.wlWindowData = malloc(sizeof(kip_wl_window_data));
+    windowData->windowType = (windowType & 0b00000001) | LMFW_WINDOW_TYPE_WINDOW_BACKEND_WL;
+    windowData->platformWindowData.wlWindowData = malloc(sizeof(lmfw_wl_window_data));
     windowData->platformWindowData.wlWindowData->decorationsEnabled = windowDecorations;
     windowData->open = false;
 
@@ -201,15 +208,15 @@ kip_window kip_wl_create_window(uint32_t width, uint32_t height, const char* tit
     return window;
 }
 
-struct wl_display* kip_wl_get_display() {
+struct wl_display* lmfw_wl_get_display() {
     return wlDisplay;
 }
 
-struct wl_surface* kip_wl_get_surface(kip_window window) {
-    return kipcornWindows[window].platformWindowData.wlWindowData->wlSurface;
+struct wl_surface* lmfw_wl_get_surface(lmfw_window window) {
+    return lmfwWindows[window].platformWindowData.wlWindowData->wlSurface;
 }
 
-void kip_wl_poll_events(bool blocking) {
+void lmfw_wl_poll_events(bool blocking) {
     if (blocking) {
         wl_display_dispatch(wlDisplay);
         return;
@@ -235,15 +242,15 @@ void kip_wl_poll_events(bool blocking) {
     }
 }
 
-void kip_wl_submit_frame(kip_window window) {
-    kip_window_data* windowData = &kipcornWindows[window];
+void lmfw_wl_submit_frame(lmfw_window window) {
+    lmfw_window_data* windowData = &lmfwWindows[window];
 
-    switch (kip_get_graphics_backend(window)) {
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
+    switch (lmfw_get_graphics_backend(window)) {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
             break;
         }
 
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
             if (!windowData->pixels) return;
 
             wl_surface_attach(windowData->platformWindowData.wlWindowData->wlSurface, windowData->platformWindowData.wlWindowData->wlBuffer, 0, 0);
@@ -258,15 +265,15 @@ void kip_wl_submit_frame(kip_window window) {
     }
 }
 
-void kip_wl_close_window(kip_window window) {
-    kip_window_data* windowData = &kipcornWindows[window];
+void lmfw_wl_close_window(lmfw_window window) {
+    lmfw_window_data* windowData = &lmfwWindows[window];
 
-    switch (kip_get_graphics_backend(window)) {
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
+    switch (lmfw_get_graphics_backend(window)) {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
             break;
         }
 
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
             if (windowData->platformWindowData.wlWindowData->wlBuffer) wl_buffer_destroy(windowData->platformWindowData.wlWindowData->wlBuffer);
             break;
         }
@@ -287,18 +294,18 @@ void kip_wl_close_window(kip_window window) {
     wl_surface_destroy(windowData->platformWindowData.wlWindowData->wlSurface);
 
     free(windowData->platformWindowData.wlWindowData);
-    memset(windowData, 0, sizeof(kip_window_data));
+    memset(windowData, 0, sizeof(lmfw_window_data));
 }
 
-void kip_wl_shutdown(void) {
+void lmfw_wl_shutdown(void) {
     wlInit = false;
 
 
-    for (uint32_t i = 0; i < kipcornWindowCount; i++) {
+    for (uint32_t i = 0; i < lmfwWindowCount; i++) {
 
-        if (kipcornWindows[i].platformWindowData.wlWindowData == NULL || kipcornWindows[i].platformWindowData.wlWindowData->wlSurface == NULL) continue;
+        if (lmfwWindows[i].platformWindowData.wlWindowData == NULL || lmfwWindows[i].platformWindowData.wlWindowData->wlSurface == NULL) continue;
 
-        kip_wl_close_window(i);
+        lmfw_wl_close_window(i);
     }
 
     zxdg_decoration_manager_v1_destroy(xdgDecorationManager);
@@ -312,14 +319,14 @@ void kip_wl_shutdown(void) {
 
     wl_registry_destroy(wlRegistry);
     wl_display_disconnect(wlDisplay);
-    free(kipcornWindows);
+    free(lmfwWindows);
 }
 
-void kip_wl_resize(kip_window window, uint32_t width, uint32_t height) {
-    kip_window_data* windowData = &kipcornWindows[window];
+void lmfw_wl_resize(lmfw_window window, uint32_t width, uint32_t height) {
+    lmfw_window_data* windowData = &lmfwWindows[window];
 
-    switch (kip_get_graphics_backend(window)) {
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
+    switch (lmfw_get_graphics_backend(window)) {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
             if (windowData->pixels) munmap(windowData->pixels, windowData->width * windowData->height * 4);
 
             windowData->width = width;
@@ -345,46 +352,46 @@ void kip_wl_resize(kip_window window, uint32_t width, uint32_t height) {
     }
 }
 
-void kip_wl_configure_xdg_surface(void* data, struct xdg_surface* surface, uint32_t serial) {
-    kip_window_data* windowData = &kipcornWindows[(kip_window)(uintptr_t)data];
+void lmfw_wl_configure_xdg_surface(void* data, struct xdg_surface* surface, uint32_t serial) {
+    lmfw_window_data* windowData = &lmfwWindows[(lmfw_window)(uintptr_t)data];
     if (!windowData) return;
 
     xdg_surface_ack_configure(surface, serial);
 
-    if ((kip_get_graphics_backend((kip_window)(uintptr_t)data)) == KIP_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE && !windowData->pixels) {
-        kip_wl_resize((kip_window)(uintptr_t)data, windowData->width, windowData->height);
-        kip_wl_submit_frame((kip_window)(uintptr_t)data);
+    if ((lmfw_get_graphics_backend((lmfw_window)(uintptr_t)data)) == LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE && !windowData->pixels) {
+        lmfw_wl_resize((lmfw_window)(uintptr_t)data, windowData->width, windowData->height);
+        lmfw_wl_submit_frame((lmfw_window)(uintptr_t)data);
     }
 }
 
-void kip_wl_toplevel_configuration(void* data, struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states) {
+void lmfw_wl_toplevel_configuration(void* data, struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states) {
     if (!width && !height) {
         return;
     }
 
-    kip_window_data* windowData = &kipcornWindows[(kip_window)(uintptr_t)data];
+    lmfw_window_data* windowData = &lmfwWindows[(lmfw_window)(uintptr_t)data];
     if (!windowData) return;
 
     if (windowData->width != width || windowData->height != height) {
-        kip_wl_resize((kip_window)(uintptr_t)data, width, height);
+        lmfw_wl_resize((lmfw_window)(uintptr_t)data, width, height);
     }
 }
 
-void kip_wl_toplevel_close(void* data, struct xdg_toplevel* toplevel) {
-    kip_window_data* windowData = &kipcornWindows[(kip_window)(uintptr_t)data];
+void lmfw_wl_toplevel_close(void* data, struct xdg_toplevel* toplevel) {
+    lmfw_window_data* windowData = &lmfwWindows[(lmfw_window)(uintptr_t)data];
 
     windowData->open = false;
 }
 
-void kip_wl_toplevel_configure_bounds(void* data, struct xdg_toplevel* toplevel, int32_t width, int32_t height) {
+void lmfw_wl_toplevel_configure_bounds(void* data, struct xdg_toplevel* toplevel, int32_t width, int32_t height) {
 
 }
 
-void kip_wl_toplevel_wm_capabilities(void* data, struct xdg_toplevel* toplevel, struct wl_array* states) {
+void lmfw_wl_toplevel_wm_capabilities(void* data, struct xdg_toplevel* toplevel, struct wl_array* states) {
 
 }
 
-void kip_wl_seat_capabilities(void* data, struct wl_seat* seat, uint32_t capabilities) {
+void lmfw_wl_seat_capabilities(void* data, struct wl_seat* seat, uint32_t capabilities) {
     xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
 
     wlKeyboard = wl_seat_get_keyboard(seat);
@@ -394,11 +401,11 @@ void kip_wl_seat_capabilities(void* data, struct wl_seat* seat, uint32_t capabil
     wl_pointer_add_listener(wlPointer, &wlPointerListener, NULL);
 }
 
-void kip_wl_seat_name(void* data, struct wl_seat* seat, const char* name) {
+void lmfw_wl_seat_name(void* data, struct wl_seat* seat, const char* name) {
 
 }
 
-void kip_wl_keyboard_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t format, int32_t fd, uint32_t size) {
+void lmfw_wl_keyboard_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t format, int32_t fd, uint32_t size) {
     char* keymapString = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 
     xkbKeymap = xkb_keymap_new_from_string(xkbContext, keymapString, XKB_KEYMAP_FORMAT_TEXT_V1, XKB_KEYMAP_COMPILE_NO_FLAGS);
@@ -407,75 +414,75 @@ void kip_wl_keyboard_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_
     close(fd);
 }
 
-void kip_wl_keyboard_enter(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface, struct wl_array* keys) {
-    for (uint32_t i = 0; i < kipcornWindowCount; i++) {
-        if (kipcornWindows[i].platformWindowData.wlWindowData->wlSurface == surface) {
-            keyboardFocusedKipcornWindow = i;
+void lmfw_wl_keyboard_enter(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface, struct wl_array* keys) {
+    for (uint32_t i = 0; i < lmfwWindowCount; i++) {
+        if (lmfwWindows[i].platformWindowData.wlWindowData->wlSurface == surface) {
+            keyboardFocusedLmfwWindow = i;
         }
     }
 }
 
-void kip_wl_keyboard_leave(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface) {
-    for (uint32_t i = 0; i < kipcornWindowCount; i++) {
-        if (kipcornWindows[i].platformWindowData.wlWindowData->wlSurface == surface && keyboardFocusedKipcornWindow == i) {
-            keyboardFocusedKipcornWindow = KIP_WINDOW_INVALID;
+void lmfw_wl_keyboard_leave(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, struct wl_surface* surface) {
+    for (uint32_t i = 0; i < lmfwWindowCount; i++) {
+        if (lmfwWindows[i].platformWindowData.wlWindowData->wlSurface == surface && keyboardFocusedLmfwWindow == i) {
+            keyboardFocusedLmfwWindow = LMFW_WINDOW_INVALID;
         }
     }
 }
 
-void kip_wl_keyboard_key(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state) {
-    if (!kipcornWindows) return;
+void lmfw_wl_keyboard_key(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state) {
+    if (!lmfwWindows) return;
 
     xkb_state_update_key(xkbState, key + 8, state ? XKB_KEY_DOWN : XKB_KEY_UP);
 
-    if (keyboardFocusedKipcornWindow < kipcornWindowCount && key < 139) {
-        kipcornWindows[keyboardFocusedKipcornWindow].keyStates[key] = state;
+    if (keyboardFocusedLmfwWindow < lmfwWindowCount && key < 139) {
+        lmfwWindows[keyboardFocusedLmfwWindow].keyStates[key] = state;
     }
 }
 
-void kip_wl_keyboard_modifiers(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group) {
+void lmfw_wl_keyboard_modifiers(void* data, struct wl_keyboard* wl_keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group) {
 
 }
 
-void kip_wl_keyboard_repeat_info(void* data, struct wl_keyboard* wl_keyboard, int32_t rate, int32_t delay) {
+void lmfw_wl_keyboard_repeat_info(void* data, struct wl_keyboard* wl_keyboard, int32_t rate, int32_t delay) {
 
 }
 
-void kip_wl_pointer_enter(void *data, struct wl_pointer* wl_pointer, uint32_t serial, struct wl_surface* surface, wl_fixed_t surface_x, wl_fixed_t surface_y) {
-    for (uint32_t i = 0; i < kipcornWindowCount; i++) {
-        if (kipcornWindows[i].platformWindowData.wlWindowData->wlSurface == surface) {
-            pointerFocusedKipcornWindow = i;
+void lmfw_wl_pointer_enter(void *data, struct wl_pointer* wl_pointer, uint32_t serial, struct wl_surface* surface, wl_fixed_t surface_x, wl_fixed_t surface_y) {
+    for (uint32_t i = 0; i < lmfwWindowCount; i++) {
+        if (lmfwWindows[i].platformWindowData.wlWindowData->wlSurface == surface) {
+            pointerFocusedLmfwWindow = i;
         }
     }
 }
 
-void kip_wl_pointer_leave(void *data, struct wl_pointer* wl_pointer, uint32_t serial, struct wl_surface* surface) {
-    for (uint32_t i = 0; i < kipcornWindowCount; i++) {
-        if (kipcornWindows[i].platformWindowData.wlWindowData->wlSurface == surface && pointerFocusedKipcornWindow == i) {
-            pointerFocusedKipcornWindow = KIP_WINDOW_INVALID;
+void lmfw_wl_pointer_leave(void *data, struct wl_pointer* wl_pointer, uint32_t serial, struct wl_surface* surface) {
+    for (uint32_t i = 0; i < lmfwWindowCount; i++) {
+        if (lmfwWindows[i].platformWindowData.wlWindowData->wlSurface == surface && pointerFocusedLmfwWindow == i) {
+            pointerFocusedLmfwWindow = LMFW_WINDOW_INVALID;
         }
     }
 }
 
-void kip_wl_pointer_motion(void *data, struct wl_pointer* wl_pointer, uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y) {
-    if (pointerFocusedKipcornWindow >= kipcornWindowCount) return;
-    if (!kipcornWindows) return;
+void lmfw_wl_pointer_motion(void *data, struct wl_pointer* wl_pointer, uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y) {
+    if (pointerFocusedLmfwWindow >= lmfwWindowCount) return;
+    if (!lmfwWindows) return;
 
-    kipcornWindows[pointerFocusedKipcornWindow].pointerX = surface_x;
-    kipcornWindows[pointerFocusedKipcornWindow].pointerY = surface_y;
+    lmfwWindows[pointerFocusedLmfwWindow].pointerX = surface_x;
+    lmfwWindows[pointerFocusedLmfwWindow].pointerY = surface_y;
 }
 
-void kip_wl_pointer_button(void *data, struct wl_pointer* wl_pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state) {
+void lmfw_wl_pointer_button(void *data, struct wl_pointer* wl_pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state) {
 
 }
 
-void kip_wl_xdg_ping(void* data, struct xdg_wm_base* shell, uint32_t serial) {
+void lmfw_wl_xdg_ping(void* data, struct xdg_wm_base* shell, uint32_t serial) {
     xdg_wm_base_pong(shell, serial);
 }
 
-void kip_wl_registry_global(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version) {
+void lmfw_wl_registry_global(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version) {
     if (!strcmp(interface, wl_compositor_interface.name)) {
-        wlCompositor = wl_registry_bind(registry, name, &wl_compositor_interface, KIP_WL_VERSION);
+        wlCompositor = wl_registry_bind(registry, name, &wl_compositor_interface, LMFW_WL_VERSION);
     }
 
     else if (!strcmp(interface, wl_shm_interface.name)) {
@@ -495,18 +502,18 @@ void kip_wl_registry_global(void* data, struct wl_registry* registry, uint32_t n
     }
 }
 
-void kip_wl_registry_global_remove(void* data, struct wl_registry* registry, uint32_t name) {
+void lmfw_wl_registry_global_remove(void* data, struct wl_registry* registry, uint32_t name) {
 
 }
 #endif
 
-#ifdef KIPCORN_XCB
+#ifdef LMFW_XCB
 
 bool xcbInit = false;
 xcb_connection_t* xcbConnection;
 xcb_screen_t* xcbScreen;
 
-void kip_xcb_init() {
+void lmfw_xcb_init() {
     xcbConnection = xcb_connect(NULL, NULL);
     if (xcb_connection_has_error(xcbConnection)) {
         return;
@@ -519,28 +526,28 @@ void kip_xcb_init() {
 
 
 
-kip_window kip_xcb_create_window(int16_t x, int16_t y, uint16_t width, uint16_t height, const char* title, kip_window_type windowType, bool inputPassthrough) {
+lmfw_window lmfw_xcb_create_window(int16_t x, int16_t y, uint16_t width, uint16_t height, const char* title, lmfw_window_type windowType, bool inputPassthrough) {
     if (!xcbInit) {
-        return KIP_WINDOW_INVALID;
+        return LMFW_WINDOW_INVALID;
     }
 
-    kipcornWindowCount++;
+    lmfwWindowCount++;
 
-    uint32_t oldKipcornWindowCapacity = kipcornWindowCapacity;
-    if (kipcornWindowCount >= kipcornWindowCapacity) {
-        kipcornWindowCapacity = kipcornWindowCapacity ? kipcornWindowCapacity * 2 : 1;
-        kipcornWindows = realloc(kipcornWindows, kipcornWindowCapacity * sizeof(kip_window_data));
+    uint32_t oldLmfwWindowCapacity = lmfwWindowCapacity;
+    if (lmfwWindowCount >= lmfwWindowCapacity) {
+        lmfwWindowCapacity = lmfwWindowCapacity ? lmfwWindowCapacity * 2 : 1;
+        lmfwWindows = realloc(lmfwWindows, lmfwWindowCapacity * sizeof(lmfw_window_data));
 
-        memset(&kipcornWindows[oldKipcornWindowCapacity], 0, (kipcornWindowCapacity - oldKipcornWindowCapacity) * sizeof(kip_window_data));
+        memset(&lmfwWindows[oldLmfwWindowCapacity], 0, (lmfwWindowCapacity - oldLmfwWindowCapacity) * sizeof(lmfw_window_data));
     }
 
-    kip_window window = kipcornWindowCount - 1;
-    kip_window_data* windowData = &kipcornWindows[window];
+    lmfw_window window = lmfwWindowCount - 1;
+    lmfw_window_data* windowData = &lmfwWindows[window];
 
     windowData->width = width;
     windowData->height = height;
-    windowData->windowType = (windowType & 0b00000001) | KIP_WINDOW_TYPE_WINDOW_BACKEND_XCB;
-    windowData->platformWindowData.xcbWindowData = malloc(sizeof(kip_xcb_window_data));
+    windowData->windowType = (windowType & 0b00000001) | LMFW_WINDOW_TYPE_WINDOW_BACKEND_XCB;
+    windowData->platformWindowData.xcbWindowData = malloc(sizeof(lmfw_xcb_window_data));
     windowData->open = false;
 
     windowData->platformWindowData.xcbWindowData->xcbWindow = xcb_generate_id(xcbConnection);
@@ -567,7 +574,7 @@ kip_window kip_xcb_create_window(int16_t x, int16_t y, uint16_t width, uint16_t 
     xcb_map_window(xcbConnection, windowData->platformWindowData.xcbWindowData->xcbWindow);
     xcb_flush(xcbConnection);
 
-    if (kip_get_graphics_backend(window) == KIP_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE) {
+    if (lmfw_get_graphics_backend(window) == LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE) {
         windowData->platformWindowData.xcbWindowData->xcbGraphicsContext = xcb_generate_id(xcbConnection);
         xcb_create_gc(xcbConnection, windowData->platformWindowData.xcbWindowData->xcbGraphicsContext, windowData->platformWindowData.xcbWindowData->xcbWindow, 0, NULL);
     }
@@ -577,15 +584,15 @@ kip_window kip_xcb_create_window(int16_t x, int16_t y, uint16_t width, uint16_t 
     return window;
 }
 
-xcb_connection_t* kip_xcb_get_connection() {
+xcb_connection_t* lmfw_xcb_get_connection() {
     return xcbConnection;
 }
 
-xcb_window_t kip_xcb_get_window(kip_window window) {
-    return kipcornWindows[window].platformWindowData.xcbWindowData->xcbWindow;
+xcb_window_t lmfw_xcb_get_window(lmfw_window window) {
+    return lmfwWindows[window].platformWindowData.xcbWindowData->xcbWindow;
 }
 
-void kip_xcb_poll_events(bool blocking) {
+void lmfw_xcb_poll_events(bool blocking) {
     xcb_generic_event_t* xcbEvent;
 
     while ((xcbEvent = xcb_poll_for_event(xcbConnection))) {
@@ -593,11 +600,11 @@ void kip_xcb_poll_events(bool blocking) {
             case (XCB_CONFIGURE_NOTIFY): {
                 xcb_configure_notify_event_t* xcbConfigureEvent = (xcb_configure_notify_event_t*)xcbEvent;
 
-                kip_window_data* windowData;
+                lmfw_window_data* windowData;
 
-                for (uint32_t i = 0; i < kipcornWindowCount; i++) {
-                    if (kipcornWindows[i].platformWindowData.xcbWindowData->xcbWindow == xcbConfigureEvent->window) {
-                        windowData = &kipcornWindows[i];
+                for (uint32_t i = 0; i < lmfwWindowCount; i++) {
+                    if (lmfwWindows[i].platformWindowData.xcbWindowData->xcbWindow == xcbConfigureEvent->window) {
+                        windowData = &lmfwWindows[i];
                     }
                 }
 
@@ -610,11 +617,11 @@ void kip_xcb_poll_events(bool blocking) {
             case (XCB_KEY_PRESS): {
                 xcb_key_press_event_t* xcbKeyPressEvent = (xcb_key_press_event_t*)xcbEvent;
 
-                kip_window_data* windowData;
+                lmfw_window_data* windowData;
 
-                for (uint32_t i = 0; i < kipcornWindowCount; i++) {
-                    if (kipcornWindows[i].platformWindowData.xcbWindowData->xcbWindow == xcbKeyPressEvent->event) {
-                        windowData = &kipcornWindows[i];
+                for (uint32_t i = 0; i < lmfwWindowCount; i++) {
+                    if (lmfwWindows[i].platformWindowData.xcbWindowData->xcbWindow == xcbKeyPressEvent->event) {
+                        windowData = &lmfwWindows[i];
                     }
                 }
 
@@ -627,11 +634,11 @@ void kip_xcb_poll_events(bool blocking) {
             case (XCB_KEY_RELEASE): {
                 xcb_key_release_event_t* xcbKeyReleaseEvent = (xcb_key_release_event_t*)xcbEvent;
 
-                kip_window_data* windowData;
+                lmfw_window_data* windowData;
 
-                for (uint32_t i = 0; i < kipcornWindowCount; i++) {
-                    if (kipcornWindows[i].platformWindowData.xcbWindowData->xcbWindow == xcbKeyReleaseEvent->event) {
-                        windowData = &kipcornWindows[i];
+                for (uint32_t i = 0; i < lmfwWindowCount; i++) {
+                    if (lmfwWindows[i].platformWindowData.xcbWindowData->xcbWindow == xcbKeyReleaseEvent->event) {
+                        windowData = &lmfwWindows[i];
                     }
                 }
 
@@ -644,11 +651,11 @@ void kip_xcb_poll_events(bool blocking) {
             case (XCB_MOTION_NOTIFY): {
                 xcb_motion_notify_event_t* xcbMotionEvent = (xcb_motion_notify_event_t*)xcbEvent;
 
-                kip_window_data* windowData;
+                lmfw_window_data* windowData;
 
-                for (uint32_t i = 0; i < kipcornWindowCount; i++) {
-                    if (kipcornWindows[i].platformWindowData.xcbWindowData->xcbWindow == xcbMotionEvent->event) {
-                        windowData = &kipcornWindows[i];
+                for (uint32_t i = 0; i < lmfwWindowCount; i++) {
+                    if (lmfwWindows[i].platformWindowData.xcbWindowData->xcbWindow == xcbMotionEvent->event) {
+                        windowData = &lmfwWindows[i];
                     }
                 }
 
@@ -678,8 +685,8 @@ void kip_xcb_poll_events(bool blocking) {
     }
 }
 
-void kip_xcb_push_pixels(kip_window window, uint16_t width, uint16_t height, int16_t dstOffsetX, int16_t dstOffsetY, const uint8_t* pixels) {
-    kip_window_data* windowData = &kipcornWindows[window];
+void lmfw_xcb_push_pixels(lmfw_window window, uint16_t width, uint16_t height, int16_t dstOffsetX, int16_t dstOffsetY, const uint8_t* pixels) {
+    lmfw_window_data* windowData = &lmfwWindows[window];
 
     xcb_put_image(xcbConnection,
         XCB_IMAGE_FORMAT_Z_PIXMAP,
@@ -696,13 +703,13 @@ void kip_xcb_push_pixels(kip_window window, uint16_t width, uint16_t height, int
     );
 }
 
-void kip_xcb_submit_frame(kip_window window) {
-    switch (kip_get_graphics_backend(window)) {
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
+void lmfw_xcb_submit_frame(lmfw_window window) {
+    switch (lmfw_get_graphics_backend(window)) {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
             break;
         }
 
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
             xcb_flush(xcbConnection);
             break;
         }
@@ -713,8 +720,8 @@ void kip_xcb_submit_frame(kip_window window) {
     }
 }
 
-void kip_xcb_close_window(kip_window window) {
-    kip_window_data* windowData = &kipcornWindows[window];
+void lmfw_xcb_close_window(lmfw_window window) {
+    lmfw_window_data* windowData = &lmfwWindows[window];
 
     xcb_destroy_window(xcbConnection, windowData->platformWindowData.xcbWindowData->xcbWindow);
     xcb_free_gc(xcbConnection, windowData->platformWindowData.xcbWindowData->xcbGraphicsContext);
@@ -722,12 +729,12 @@ void kip_xcb_close_window(kip_window window) {
     xcb_flush(xcbConnection);
 
 
-    switch (kip_get_graphics_backend(window)) {
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
+    switch (lmfw_get_graphics_backend(window)) {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
             break;
         }
 
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
             break;
         }
 
@@ -737,15 +744,15 @@ void kip_xcb_close_window(kip_window window) {
     }
 
     free(windowData->platformWindowData.xcbWindowData);
-    memset(windowData, 0, sizeof(kip_window_data));
+    memset(windowData, 0, sizeof(lmfw_window_data));
 }
 
-void kip_xcb_shutdown() {
+void lmfw_xcb_shutdown() {
     xcb_disconnect(xcbConnection);
 }
 #endif
 
-#ifdef KIPCORN_XLIB
+#ifdef LMFW_XLIB
 
 bool xlibInit = false;
 Display* xlibDisplay;
@@ -754,7 +761,7 @@ Window xlibRootWindow;
 XVisualInfo xlibVisualInfo;
 XContext xlibContext;
 
-void kip_xlib_init() {
+void lmfw_xlib_init() {
     xlibDisplay = XOpenDisplay(NULL);
     xlibScreen = DefaultScreen(xlibDisplay);
     xlibRootWindow = RootWindow(xlibDisplay, xlibScreen);
@@ -764,28 +771,28 @@ void kip_xlib_init() {
     xlibInit = true;
 }
 
-kip_window kip_xlib_create_window(int16_t x, int16_t y, uint16_t width, uint16_t height, const char* title, kip_window_type windowType, bool inputPassthrough) {
+lmfw_window lmfw_xlib_create_window(int16_t x, int16_t y, uint16_t width, uint16_t height, const char* title, lmfw_window_type windowType, bool inputPassthrough) {
     if (!xlibInit) {
-        return KIP_WINDOW_INVALID;
+        return LMFW_WINDOW_INVALID;
     }
 
-    kipcornWindowCount++;
+    lmfwWindowCount++;
 
-    uint32_t oldKipcornWindowCapacity = kipcornWindowCapacity;
-    if (kipcornWindowCount >= kipcornWindowCapacity) {
-        kipcornWindowCapacity = kipcornWindowCapacity ? kipcornWindowCapacity * 2 : 1;
-        kipcornWindows = realloc(kipcornWindows, kipcornWindowCapacity * sizeof(kip_window_data));
+    uint32_t oldLmfwWindowCapacity = lmfwWindowCapacity;
+    if (lmfwWindowCount >= lmfwWindowCapacity) {
+        lmfwWindowCapacity = lmfwWindowCapacity ? lmfwWindowCapacity * 2 : 1;
+        lmfwWindows = realloc(lmfwWindows, lmfwWindowCapacity * sizeof(lmfw_window_data));
 
-        memset(&kipcornWindows[oldKipcornWindowCapacity], 0, (kipcornWindowCapacity - oldKipcornWindowCapacity) * sizeof(kip_window_data));
+        memset(&lmfwWindows[oldLmfwWindowCapacity], 0, (lmfwWindowCapacity - oldLmfwWindowCapacity) * sizeof(lmfw_window_data));
     }
 
-    kip_window window = kipcornWindowCount - 1;
-    kip_window_data* windowData = &kipcornWindows[window];
+    lmfw_window window = lmfwWindowCount - 1;
+    lmfw_window_data* windowData = &lmfwWindows[window];
 
     windowData->width = width;
     windowData->height = height;
-    windowData->windowType = (windowType & 0b00000001) | KIP_WINDOW_TYPE_WINDOW_BACKEND_XLIB;
-    windowData->platformWindowData.xlibWindowData = malloc(sizeof(kip_xlib_window_data));
+    windowData->windowType = (windowType & 0b00000001) | LMFW_WINDOW_TYPE_WINDOW_BACKEND_XLIB;
+    windowData->platformWindowData.xlibWindowData = malloc(sizeof(lmfw_xlib_window_data));
     windowData->open = false;
 
     XSetWindowAttributes xlibWindowAttributes = {0};
@@ -833,7 +840,7 @@ kip_window kip_xlib_create_window(int16_t x, int16_t y, uint16_t width, uint16_t
     XMapWindow(xlibDisplay, windowData->platformWindowData.xlibWindowData->xlibWindow);
     XFlush(xlibDisplay);
 
-    if (kip_get_graphics_backend(window) == KIP_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE) {
+    if (lmfw_get_graphics_backend(window) == LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE) {
         XCreateGC(xlibDisplay, windowData->platformWindowData.xlibWindowData->xlibWindow, 0, NULL);
     }
 
@@ -842,15 +849,15 @@ kip_window kip_xlib_create_window(int16_t x, int16_t y, uint16_t width, uint16_t
     return window;
 }
 
-Display* kip_xlib_get_display() {
+Display* lmfw_xlib_get_display() {
     return xlibDisplay;
 }
 
-Window kip_xlib_get_window(kip_window window) {
-    return kipcornWindows[window].platformWindowData.xlibWindowData->xlibWindow;
+Window lmfw_xlib_get_window(lmfw_window window) {
+    return lmfwWindows[window].platformWindowData.xlibWindowData->xlibWindow;
 }
 
-void kip_xlib_poll_events(bool blocking) {
+void lmfw_xlib_poll_events(bool blocking) {
     while (XPending(xlibDisplay)) {
         XEvent xlibEvent;
         XNextEvent(xlibDisplay, &xlibEvent);
@@ -862,7 +869,7 @@ void kip_xlib_poll_events(bool blocking) {
                 XPointer xlibPointer;
                 XFindContext(xlibDisplay, xlibConfigureEvent->window, xlibContext, &xlibPointer);
 
-                kip_window_data* windowData = (kip_window_data*)xlibPointer;
+                lmfw_window_data* windowData = (lmfw_window_data*)xlibPointer;
 
                 windowData->width = xlibConfigureEvent->width;
                 windowData->height = xlibConfigureEvent->height;
@@ -875,7 +882,7 @@ void kip_xlib_poll_events(bool blocking) {
                 XPointer xlibPointer;
                 XFindContext(xlibDisplay, xlibKeyPressedEvent->window, xlibContext, &xlibPointer);
 
-                kip_window_data* windowData = (kip_window_data*)xlibPointer;
+                lmfw_window_data* windowData = (lmfw_window_data*)xlibPointer;
 
                 windowData->keyStates[xlibKeyPressedEvent->keycode - 8] = true;
 
@@ -887,7 +894,7 @@ void kip_xlib_poll_events(bool blocking) {
                 XPointer xlibPointer;
                 XFindContext(xlibDisplay, xlibKeyReleasedEvent->window, xlibContext, &xlibPointer);
 
-                kip_window_data* windowData = (kip_window_data*)xlibPointer;
+                lmfw_window_data* windowData = (lmfw_window_data*)xlibPointer;
 
                 windowData->keyStates[xlibKeyReleasedEvent->keycode - 8] = false;
 
@@ -899,7 +906,7 @@ void kip_xlib_poll_events(bool blocking) {
                 XPointer xlibPointer;
                 XFindContext(xlibDisplay, xlibMotionEvent->window, xlibContext, &xlibPointer);
 
-                kip_window_data* windowData = (kip_window_data*)xlibPointer;
+                lmfw_window_data* windowData = (lmfw_window_data*)xlibPointer;
 
                 if (xlibMotionEvent->x < 0) {
                     windowData->pointerX = 0;
@@ -925,8 +932,8 @@ void kip_xlib_poll_events(bool blocking) {
     }
 }
 
-void kip_xlib_push_pixels(kip_window window, uint32_t srcOffsetX, uint32_t srcOffsetY, uint32_t dstOffsetX, uint32_t dstOffsetY, uint32_t width, uint32_t height, const uint8_t* pixels) {
-    kip_window_data* windowData = &kipcornWindows[window];
+void lmfw_xlib_push_pixels(lmfw_window window, uint32_t srcOffsetX, uint32_t srcOffsetY, uint32_t dstOffsetX, uint32_t dstOffsetY, uint32_t width, uint32_t height, const uint8_t* pixels) {
+    lmfw_window_data* windowData = &lmfwWindows[window];
 
     XImage* xlibImage = XCreateImage(
         xlibDisplay,
@@ -955,13 +962,13 @@ void kip_xlib_push_pixels(kip_window window, uint32_t srcOffsetX, uint32_t srcOf
     );
 }
 
-void kip_xlib_submit_frame(kip_window window) {
-    switch (kip_get_graphics_backend(window)) {
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
+void lmfw_xlib_submit_frame(lmfw_window window) {
+    switch (lmfw_get_graphics_backend(window)) {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
             break;
         }
 
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
             XFlush(xlibDisplay);
             break;
         }
@@ -972,18 +979,18 @@ void kip_xlib_submit_frame(kip_window window) {
     }
 }
 
-void kip_xlib_close_window(kip_window window) {
-    kip_window_data* windowData = &kipcornWindows[window];
+void lmfw_xlib_close_window(lmfw_window window) {
+    lmfw_window_data* windowData = &lmfwWindows[window];
     XDestroyWindow(xlibDisplay, windowData->platformWindowData.xlibWindowData->xlibWindow);
 
     XFlush(xlibDisplay);
 
-    switch (kip_get_graphics_backend(window)) {
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
+    switch (lmfw_get_graphics_backend(window)) {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_NONE: {
             break;
         }
 
-        case KIP_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
+        case LMFW_WINDOW_TYPE_GRAPHICS_BACKEND_SOFTWARE: {
             break;
         }
 
@@ -993,10 +1000,10 @@ void kip_xlib_close_window(kip_window window) {
     }
 
     free(windowData->platformWindowData.xlibWindowData);
-    memset(windowData, 0, sizeof(kip_window_data));
+    memset(windowData, 0, sizeof(lmfw_window_data));
 }
 
-void kip_xlib_shutdown() {
+void lmfw_xlib_shutdown() {
     XCloseDisplay(xlibDisplay);
 }
 #endif
